@@ -23,12 +23,15 @@ import {
   clearCheckedItems,
   clearAllItems,
 } from '@/lib/shopping';
+import { moveShoppingItemToDespensa } from '@/lib/despensa';
 import { ShoppingItem } from '@/types/shopping';
 
 export default function ShoppingPage() {
   const [items, setItems] = useState<ShoppingItem[]>([]);
   const [newItemText, setNewItemText] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
 
   const loadList = async () => {
     try {
@@ -76,12 +79,35 @@ export default function ShoppingPage() {
     }
   };
 
-  const handleClearChecked = async () => {
+  const handleClearCheckedOnly = async () => {
+    setIsClearing(true);
     try {
       await clearCheckedItems();
       await loadList();
+      setIsClearDialogOpen(false);
     } catch (error) {
       console.error('Failed to clear checked items:', error);
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
+  const handleMoveToDespensaAndClear = async () => {
+    setIsClearing(true);
+    try {
+      // Move all checked items to despensa
+      const checkedItems = items.filter((i) => i.checked);
+      for (const item of checkedItems) {
+        await moveShoppingItemToDespensa(item.text);
+      }
+      // Then clear them from the list
+      await clearCheckedItems();
+      await loadList();
+      setIsClearDialogOpen(false);
+    } catch (error) {
+      console.error('Failed to move items to despensa:', error);
+    } finally {
+      setIsClearing(false);
     }
   };
 
@@ -103,25 +129,25 @@ export default function ShoppingPage() {
   const checkedCount = items.filter((i) => i.checked).length;
 
   return (
-    <AppShell title="Shopping List">
+    <AppShell title="Lista de Compras">
       <div className="space-y-4 py-4">
         {/* Add item form */}
         <form onSubmit={handleAddItem} className="flex gap-2">
           <Input
             value={newItemText}
             onChange={(e) => setNewItemText(e.target.value)}
-            placeholder="Add item..."
+            placeholder="Añadir artículo..."
             className="flex-1"
           />
-          <Button type="submit">Add</Button>
+          <Button type="submit">Añadir</Button>
         </form>
 
         {/* List */}
         {isLoading ? (
-          <p className="text-center text-gray-500 py-8">Loading...</p>
+          <p className="text-center text-gray-500 py-8">Cargando...</p>
         ) : items.length === 0 ? (
           <p className="text-center text-gray-500 py-8">
-            Shopping list is empty. Add items from recipes or manually above.
+            La lista de compras está vacía. Añade artículos desde recetas o manualmente arriba.
           </p>
         ) : (
           <div className="space-y-2">
@@ -141,7 +167,7 @@ export default function ShoppingPage() {
                     </p>
                     {item.fromRecipes.length > 0 && (
                       <p className="text-xs text-gray-400">
-                        From: {item.fromRecipes.join(', ')}
+                        De: {item.fromRecipes.join(', ')}
                       </p>
                     )}
                   </div>
@@ -163,27 +189,56 @@ export default function ShoppingPage() {
         {items.length > 0 && (
           <div className="flex gap-2">
             {checkedCount > 0 && (
-              <Button variant="outline" className="flex-1" onClick={handleClearChecked}>
-                Clear Checked ({checkedCount})
-              </Button>
+              <Dialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="flex-1">
+                    Limpiar marcados ({checkedCount})
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Limpiar artículos marcados</DialogTitle>
+                    <DialogDescription>
+                      ¿Quieres mover los artículos marcados a la despensa antes de limpiarlos?
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter className="flex-col gap-2 sm:flex-col">
+                    <Button
+                      onClick={handleMoveToDespensaAndClear}
+                      disabled={isClearing}
+                      className="w-full"
+                    >
+                      {isClearing ? 'Moviendo...' : 'Mover a despensa y limpiar'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={handleClearCheckedOnly}
+                      disabled={isClearing}
+                      className="w-full"
+                    >
+                      Solo limpiar
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             )}
 
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="default" className="flex-1">
-                  Done Shopping
+                  Compra terminada
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Done Shopping?</DialogTitle>
+                  <DialogTitle>¿Compra terminada?</DialogTitle>
                   <DialogDescription>
-                    This will clear the entire shopping list. Are you sure?
+                    Esto borrará toda la lista de compras. ¿Estás seguro?
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
-                  <Button variant="outline">Cancel</Button>
-                  <Button onClick={handleDoneShopping}>Yes, Clear All</Button>
+                  <Button variant="outline">Cancelar</Button>
+                  <Button onClick={handleDoneShopping}>Sí, borrar todo</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
