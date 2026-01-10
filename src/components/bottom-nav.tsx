@@ -2,11 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { href: '/recipes', label: 'Recipes', icon: '📖' },
-  { href: '/shopping', label: 'Shopping', icon: '🛒' },
+  { href: '/recipes', label: 'Recetas', icon: '📖' },
+  { href: '/despensa', label: 'Despensa', icon: Package },
+  { href: '/shopping', label: 'Compras', icon: '🛒' },
 ];
 
 export function BottomNav() {
@@ -26,7 +28,9 @@ export function BottomNav() {
                 isActive ? 'text-blue-600' : 'text-gray-500'
               )}
             >
-              <span className="text-xl">{item.icon}</span>
+              <span className="text-xl">
+                {typeof item.icon === 'string' ? item.icon : <item.icon className="h-5 w-5" />}
+              </span>
               <span className="text-xs mt-1">{item.label}</span>
             </Link>
           );
