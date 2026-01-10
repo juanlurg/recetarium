@@ -6,6 +6,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { ShoppingItem, ShoppingList } from '@/types/shopping';
+import { getDespensaItemNames, isInDespensa } from '@/lib/despensa';
 
 const DOC_PATH = 'shoppingList/current';
 
@@ -38,9 +39,13 @@ export async function saveShoppingList(list: ShoppingList): Promise<void> {
 
 export async function addIngredientsToShoppingList(
   ingredientsText: string,
-  recipeName: string
-): Promise<void> {
+  recipeName: string,
+  excludeDespensa: boolean = true
+): Promise<{ added: number; skipped: number }> {
   const list = await getShoppingList();
+
+  // Get despensa items if we need to filter
+  const despensaItems = excludeDespensa ? await getDespensaItemNames() : [];
 
   // Parse ingredients - split by newlines or commas
   const ingredients = ingredientsText
@@ -48,7 +53,16 @@ export async function addIngredientsToShoppingList(
     .map((i) => i.trim())
     .filter((i) => i.length > 0);
 
+  let added = 0;
+  let skipped = 0;
+
   for (const ingredient of ingredients) {
+    // Skip if in despensa
+    if (excludeDespensa && isInDespensa(ingredient, despensaItems)) {
+      skipped++;
+      continue;
+    }
+
     const normalizedIngredient = ingredient.toLowerCase();
 
     // Try to find existing similar item (simple substring match)
@@ -73,10 +87,12 @@ export async function addIngredientsToShoppingList(
         checked: false,
         fromRecipes: [recipeName],
       });
+      added++;
     }
   }
 
   await saveShoppingList(list);
+  return { added, skipped };
 }
 
 export async function addManualItem(text: string): Promise<void> {
