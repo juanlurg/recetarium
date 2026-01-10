@@ -44,6 +44,7 @@ export default function RecipeDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [addedToList, setAddedToList] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadRecipe() {
@@ -74,9 +75,24 @@ export default function RecipeDetailPage() {
   const handleAddToShoppingList = async () => {
     if (!recipe) return;
     try {
-      await addIngredientsToShoppingList(recipe.ingredients, recipe.title);
+      const result = await addIngredientsToShoppingList(recipe.ingredients, recipe.title);
       setAddedToList(true);
-      setTimeout(() => setAddedToList(false), 2000);
+
+      // Build feedback message based on result
+      if (result.skipped > 0 && result.added > 0) {
+        setFeedbackMessage(`Añadido ${result.added}, ${result.skipped} en despensa`);
+      } else if (result.skipped > 0 && result.added === 0) {
+        setFeedbackMessage(`Todo en despensa (${result.skipped})`);
+      } else if (result.added > 0) {
+        setFeedbackMessage(`Añadido ${result.added}`);
+      } else {
+        setFeedbackMessage('Añadido');
+      }
+
+      setTimeout(() => {
+        setAddedToList(false);
+        setFeedbackMessage(null);
+      }, 3000);
     } catch (error) {
       console.error('Failed to add to shopping list:', error);
     }
@@ -164,7 +180,7 @@ export default function RecipeDetailPage() {
             {addedToList ? (
               <>
                 <Check className="h-4 w-4" />
-                Añadido
+                {feedbackMessage || 'Añadido'}
               </>
             ) : (
               <>
