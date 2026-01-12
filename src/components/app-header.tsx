@@ -29,7 +29,7 @@ export function AppHeader({ title = 'Recetarium', showBack = false }: AppHeaderP
               onClick={() => router.back()}
               className="p-1"
             >
-              ← Back
+              ← Atrás
             </Button>
           )}
           <h1 className="font-semibold text-lg">{title}</h1>
@@ -37,7 +37,7 @@ export function AppHeader({ title = 'Recetarium', showBack = false }: AppHeaderP
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-500 capitalize">{currentUser}</span>
           <Button variant="ghost" size="sm" onClick={handleLogout}>
-            Exit
+            Salir
           </Button>
         </div>
       </div>

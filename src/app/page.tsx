@@ -32,7 +32,7 @@ export default function LoginPage() {
     if (success) {
       router.push('/recipes');
     } else {
-      setError('Incorrect password');
+      setError('Contraseña incorrecta');
     }
     setIsLoading(false);
   };
@@ -42,12 +42,12 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Recetarium</CardTitle>
-          <p className="text-gray-500">Family Recipe Manager</p>
+          <p className="text-gray-500">Gestor de Recetas Familiar</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label>Who are you?</Label>
+              <Label>¿Quién eres?</Label>
               <div className="flex gap-2">
                 <Button
                   type="button"
@@ -69,13 +69,13 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Contraseña</Label>
               <Input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter shared password"
+                placeholder="Ingresa la contraseña compartida"
                 required
               />
             </div>
@@ -85,7 +85,7 @@ export default function LoginPage() {
             )}
 
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Entering...' : 'Enter'}
+              {isLoading ? 'Entrando...' : 'Entrar'}
             </Button>
           </form>
         </CardContent>

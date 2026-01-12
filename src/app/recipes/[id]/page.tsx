@@ -5,8 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import {
   Dialog,
   DialogContent,
@@ -16,7 +14,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { FoodPlaceholder, detectFoodCategory } from '@/components/ui/food-placeholder';
 import { getRecipeById, deleteRecipe } from '@/lib/recipes';
 import { addIngredientsToShoppingList } from '@/lib/shopping';
 import { Recipe } from '@/types/recipe';
@@ -31,7 +28,7 @@ import {
   Check
 } from 'lucide-react';
 
-const difficultyLabels = {
+const difficultyLabels: Record<string, string> = {
   easy: 'Facil',
   medium: 'Media',
   hard: 'Dificil',
@@ -78,13 +75,12 @@ export default function RecipeDetailPage() {
       const result = await addIngredientsToShoppingList(recipe.ingredients, recipe.title);
       setAddedToList(true);
 
-      // Build feedback message based on result
       if (result.skipped > 0 && result.added > 0) {
-        setFeedbackMessage(`Añadido ${result.added}, ${result.skipped} en despensa`);
+        setFeedbackMessage(`+${result.added}, ${result.skipped} en despensa`);
       } else if (result.skipped > 0 && result.added === 0) {
-        setFeedbackMessage(`Todo en despensa (${result.skipped})`);
+        setFeedbackMessage(`Todo en despensa`);
       } else if (result.added > 0) {
-        setFeedbackMessage(`Añadido ${result.added}`);
+        setFeedbackMessage(`+${result.added} ingredientes`);
       } else {
         setFeedbackMessage('Añadido');
       }
@@ -101,10 +97,10 @@ export default function RecipeDetailPage() {
   if (isLoading) {
     return (
       <AppShell title="Cargando..." showBack>
-        <div className="py-8 space-y-4">
-          <div className="h-32 bg-muted animate-pulse rounded-xl" />
-          <div className="h-8 bg-muted animate-pulse rounded w-2/3" />
-          <div className="h-64 bg-muted animate-pulse rounded-xl" />
+        <div className="py-4 space-y-3">
+          <div className="h-10 bg-muted animate-pulse rounded w-1/2" />
+          <div className="h-6 bg-muted animate-pulse rounded w-3/4" />
+          <div className="h-40 bg-muted animate-pulse rounded-lg mt-4" />
         </div>
       </AppShell>
     );
@@ -120,7 +116,6 @@ export default function RecipeDetailPage() {
     );
   }
 
-  const category = detectFoodCategory(recipe.title, recipe.cuisine);
   const ingredientsList = recipe.ingredients
     .split(/[\n,]/)
     .map((i) => i.trim())
@@ -128,93 +123,83 @@ export default function RecipeDetailPage() {
 
   return (
     <AppShell title={recipe.title} showBack>
-      <div className="py-6 space-y-6">
-        {/* Header with placeholder */}
-        <div className="flex gap-4 items-start">
-          <FoodPlaceholder category={category} size="lg" />
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold text-foreground">{recipe.title}</h1>
-
-            {/* Metadata */}
-            <div className="flex flex-wrap gap-3 mt-3 text-sm text-muted-foreground">
-              {recipe.cookingTime && (
-                <span className="flex items-center gap-1.5">
-                  <Clock className="h-4 w-4" />
-                  {recipe.cookingTime}
-                </span>
-              )}
-              {recipe.servings && (
-                <span className="flex items-center gap-1.5">
-                  <Users className="h-4 w-4" />
-                  {recipe.servings} porciones
-                </span>
-              )}
-              {recipe.difficulty && (
-                <span className="flex items-center gap-1.5">
-                  <ChefHat className="h-4 w-4" />
-                  {difficultyLabels[recipe.difficulty]}
-                </span>
-              )}
-            </div>
-
-            {/* Tags */}
-            <div className="flex gap-2 mt-3 flex-wrap">
-              {recipe.cuisine && (
-                <Badge variant="secondary">{recipe.cuisine}</Badge>
-              )}
-              {recipe.dietaryTags?.map((tag) => (
-                <Badge key={tag} variant="outline">{tag}</Badge>
-              ))}
-            </div>
-          </div>
+      <div className="py-4 space-y-4">
+        {/* Metadata row */}
+        <div className="flex items-center gap-2 flex-wrap text-sm text-muted-foreground">
+          {recipe.cookingTime && (
+            <span className="flex items-center gap-1">
+              <Clock className="h-3.5 w-3.5" />
+              {recipe.cookingTime}
+            </span>
+          )}
+          {recipe.servings && (
+            <span className="flex items-center gap-1">
+              <Users className="h-3.5 w-3.5" />
+              {recipe.servings}
+            </span>
+          )}
+          {recipe.difficulty && (
+            <span className="flex items-center gap-1">
+              <ChefHat className="h-3.5 w-3.5" />
+              {difficultyLabels[recipe.difficulty]}
+            </span>
+          )}
+          {recipe.cuisine && (
+            <Badge variant="secondary" className="text-xs">{recipe.cuisine}</Badge>
+          )}
+          {recipe.dietaryTags?.map((tag) => (
+            <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
+          ))}
         </div>
 
         {/* Action buttons */}
         <div className="flex gap-2">
           <Button
             variant="outline"
-            className="flex-1 gap-2"
+            size="sm"
+            className="flex-1 gap-1.5"
             onClick={handleAddToShoppingList}
             disabled={addedToList}
           >
             {addedToList ? (
               <>
-                <Check className="h-4 w-4" />
-                {feedbackMessage || 'Añadido'}
+                <Check className="h-3.5 w-3.5" />
+                {feedbackMessage}
               </>
             ) : (
               <>
-                <ShoppingCart className="h-4 w-4" />
-                Añadir a la lista
+                <ShoppingCart className="h-3.5 w-3.5" />
+                A la lista
               </>
             )}
           </Button>
           <Button
             variant="outline"
-            size="icon"
+            size="sm"
             onClick={() => router.push(`/recipes/${recipe.id}/edit`)}
           >
-            <Pencil className="h-4 w-4" />
+            <Pencil className="h-3.5 w-3.5" />
           </Button>
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="outline" size="icon">
-                <Trash2 className="h-4 w-4 text-destructive" />
+              <Button variant="outline" size="sm">
+                <Trash2 className="h-3.5 w-3.5 text-destructive" />
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Eliminar receta</DialogTitle>
                 <DialogDescription>
-                  ¿Seguro que quieres eliminar &quot;{recipe.title}&quot;? Esta accion no se puede deshacer.
+                  ¿Seguro que quieres eliminar &quot;{recipe.title}&quot;?
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
-                <Button variant="outline" disabled={isDeleting}>
+                <Button variant="outline" size="sm" disabled={isDeleting}>
                   Cancelar
                 </Button>
                 <Button
                   variant="destructive"
+                  size="sm"
                   onClick={handleDelete}
                   disabled={isDeleting}
                 >
@@ -225,59 +210,56 @@ export default function RecipeDetailPage() {
           </Dialog>
         </div>
 
-        <Separator />
-
         {/* Ingredients */}
-        <Card>
-          <CardContent className="p-5">
-            <h2 className="font-semibold text-lg mb-4">Ingredientes</h2>
-            <ul className="space-y-2">
-              {ingredientsList.map((ingredient, index) => (
-                <li key={index} className="flex items-start gap-3">
-                  <span className="h-2 w-2 rounded-full bg-primary mt-2 shrink-0" />
-                  <span>{ingredient}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+        <div className="pt-2">
+          <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide mb-2">
+            Ingredientes
+          </h2>
+          <ul className="space-y-1">
+            {ingredientsList.map((ingredient, index) => (
+              <li key={index} className="flex items-baseline gap-2 text-sm">
+                <span className="text-primary">•</span>
+                <span>{ingredient}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
 
         {/* Steps */}
-        <Card>
-          <CardContent className="p-5">
-            <h2 className="font-semibold text-lg mb-4">Preparacion</h2>
-            <ol className="space-y-4">
-              {recipe.steps.map((step, index) => (
-                <li key={index} className="flex gap-4">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium">
-                    {index + 1}
-                  </span>
-                  <p className="pt-0.5">{step}</p>
-                </li>
-              ))}
-            </ol>
-          </CardContent>
-        </Card>
+        <div className="pt-2">
+          <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide mb-2">
+            Preparacion
+          </h2>
+          <ol className="space-y-3">
+            {recipe.steps.map((step, index) => (
+              <li key={index} className="flex gap-3 text-sm">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-medium">
+                  {index + 1}
+                </span>
+                <p className="flex-1">{step}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
 
-        {/* Source */}
+        {/* Source link */}
         {recipe.sourceUrl && (
           <a
             href={recipe.sourceUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors pt-2"
           >
-            <ExternalLink className="h-4 w-4" />
+            <ExternalLink className="h-3 w-3" />
             Ver fuente original
           </a>
         )}
 
-        {/* Footer info */}
-        <p className="text-xs text-muted-foreground text-center pt-4">
-          Creada por {recipe.createdBy} el{' '}
-          {recipe.createdAt.toLocaleDateString('es-ES', {
+        {/* Footer */}
+        <p className="text-xs text-muted-foreground pt-4 border-t border-border/50">
+          Por {recipe.createdBy} · {recipe.createdAt.toLocaleDateString('es-ES', {
             day: 'numeric',
-            month: 'long',
+            month: 'short',
             year: 'numeric',
           })}
         </p>

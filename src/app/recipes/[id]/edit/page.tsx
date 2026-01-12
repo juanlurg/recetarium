@@ -100,35 +100,35 @@ export default function EditRecipePage() {
 
   if (isLoading) {
     return (
-      <AppShell title="Edit Recipe" showBack hideNav>
-        <p className="text-center text-gray-500 py-8">Loading...</p>
+      <AppShell title="Editar Receta" showBack hideNav>
+        <p className="text-center text-gray-500 py-8">Cargando...</p>
       </AppShell>
     );
   }
 
   return (
-    <AppShell title="Edit Recipe" showBack hideNav>
+    <AppShell title="Editar Receta" showBack hideNav>
       <form onSubmit={handleSubmit} className="space-y-4 py-4">
         {/* Title */}
         <div className="space-y-2">
-          <Label htmlFor="title">Title *</Label>
+          <Label htmlFor="title">Título *</Label>
           <Input
             id="title"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            placeholder="Recipe name"
+            placeholder="Nombre de la receta"
             required
           />
         </div>
 
         {/* Ingredients */}
         <div className="space-y-2">
-          <Label htmlFor="ingredients">Ingredients *</Label>
+          <Label htmlFor="ingredients">Ingredientes *</Label>
           <Textarea
             id="ingredients"
             value={formData.ingredients}
             onChange={(e) => setFormData({ ...formData, ingredients: e.target.value })}
-            placeholder="List your ingredients"
+            placeholder="Lista tus ingredientes"
             rows={5}
             required
           />
@@ -136,14 +136,14 @@ export default function EditRecipePage() {
 
         {/* Steps */}
         <div className="space-y-2">
-          <Label>Steps *</Label>
+          <Label>Pasos *</Label>
           {formData.steps.map((step, index) => (
             <div key={index} className="flex gap-2">
               <span className="text-gray-500 pt-2">{index + 1}.</span>
               <Input
                 value={step}
                 onChange={(e) => handleStepChange(index, e.target.value)}
-                placeholder={`Step ${index + 1}`}
+                placeholder={`Paso ${index + 1}`}
               />
               {formData.steps.length > 1 && (
                 <Button
@@ -158,18 +158,18 @@ export default function EditRecipePage() {
             </div>
           ))}
           <Button type="button" variant="outline" size="sm" onClick={addStep}>
-            + Add Step
+            + Añadir Paso
           </Button>
         </div>
 
         {/* Optional fields */}
         <Card>
           <CardContent className="pt-4 space-y-4">
-            <p className="text-sm text-gray-500">Optional details</p>
+            <p className="text-sm text-gray-500">Detalles opcionales</p>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="servings">Servings</Label>
+                <Label htmlFor="servings">Porciones</Label>
                 <Input
                   id="servings"
                   type="number"
@@ -179,7 +179,7 @@ export default function EditRecipePage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="cookingTime">Cooking Time</Label>
+                <Label htmlFor="cookingTime">Tiempo de cocción</Label>
                 <Input
                   id="cookingTime"
                   value={formData.cookingTime}
@@ -191,37 +191,37 @@ export default function EditRecipePage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="cuisine">Cuisine</Label>
+                <Label htmlFor="cuisine">Cocina</Label>
                 <Input
                   id="cuisine"
                   value={formData.cuisine}
                   onChange={(e) => setFormData({ ...formData, cuisine: e.target.value })}
-                  placeholder="Italian"
+                  placeholder="Italiana"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="difficulty">Difficulty</Label>
+                <Label htmlFor="difficulty">Dificultad</Label>
                 <select
                   id="difficulty"
                   value={formData.difficulty}
                   onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as typeof formData.difficulty })}
                   className="w-full h-10 px-3 rounded-md border border-input bg-background"
                 >
-                  <option value="">Select...</option>
-                  <option value="easy">Easy</option>
-                  <option value="medium">Medium</option>
-                  <option value="hard">Hard</option>
+                  <option value="">Seleccionar...</option>
+                  <option value="easy">Fácil</option>
+                  <option value="medium">Media</option>
+                  <option value="hard">Difícil</option>
                 </select>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="dietaryTags">Dietary Tags</Label>
+              <Label htmlFor="dietaryTags">Etiquetas dietéticas</Label>
               <Input
                 id="dietaryTags"
                 value={formData.dietaryTags}
                 onChange={(e) => setFormData({ ...formData, dietaryTags: e.target.value })}
-                placeholder="vegetarian, gluten-free (comma-separated)"
+                placeholder="vegetariano, sin gluten (separado por comas)"
               />
             </div>
           </CardContent>
@@ -229,7 +229,7 @@ export default function EditRecipePage() {
 
         {/* Submit */}
         <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? 'Saving...' : 'Save Changes'}
+          {isSubmitting ? 'Guardando...' : 'Guardar Cambios'}
         </Button>
       </form>
     </AppShell>

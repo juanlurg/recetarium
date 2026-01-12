@@ -54,7 +54,7 @@ export default function InstagramImportPage() {
 
     try {
       // Step 1: Download video
-      setProcessingStep('Downloading video from Instagram...');
+      setProcessingStep('Descargando video de Instagram...');
       const downloadRes = await fetch('/api/instagram/download', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -69,7 +69,7 @@ export default function InstagramImportPage() {
       const { videoUrl } = await downloadRes.json();
 
       // Step 2: Extract recipe with Gemini
-      setProcessingStep('Analyzing video with AI (this may take a minute)...');
+      setProcessingStep('Analizando video con IA (esto puede tardar un minuto)...');
       const extractRes = await fetch('/api/extract-recipe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -153,14 +153,14 @@ export default function InstagramImportPage() {
   };
 
   return (
-    <AppShell title="Import from Instagram" showBack hideNav>
+    <AppShell title="Importar desde Instagram" showBack hideNav>
       <div className="space-y-4 py-4">
         {!extractedRecipe ? (
           <>
             {/* URL Input */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Paste Instagram Reel URL</CardTitle>
+                <CardTitle className="text-lg">Pega la URL del Reel de Instagram</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <Input
@@ -174,7 +174,7 @@ export default function InstagramImportPage() {
                   disabled={isProcessing || !instagramUrl.trim()}
                   className="w-full"
                 >
-                  {isProcessing ? 'Processing...' : 'Extract Recipe'}
+                  {isProcessing ? 'Procesando...' : 'Extraer Receta'}
                 </Button>
 
                 {processingStep && (
@@ -188,7 +188,7 @@ export default function InstagramImportPage() {
             </Card>
 
             <p className="text-xs text-gray-400 text-center">
-              Paste a public Instagram Reel URL. The AI will watch the video and extract the recipe automatically.
+              Pega la URL de un Reel público de Instagram. La IA verá el video y extraerá la receta automáticamente.
             </p>
           </>
         ) : (
@@ -197,14 +197,14 @@ export default function InstagramImportPage() {
             <Card className="bg-green-50 border-green-200">
               <CardContent className="p-4">
                 <p className="text-sm text-green-700">
-                  Recipe extracted successfully. Review and edit below before saving.
+                  Receta extraída correctamente. Revisa y edita a continuación antes de guardar.
                 </p>
               </CardContent>
             </Card>
 
             {/* Title */}
             <div className="space-y-2">
-              <Label htmlFor="title">Title *</Label>
+              <Label htmlFor="title">Título *</Label>
               <Input
                 id="title"
                 value={formData.title}
@@ -215,7 +215,7 @@ export default function InstagramImportPage() {
 
             {/* Ingredients */}
             <div className="space-y-2">
-              <Label htmlFor="ingredients">Ingredients *</Label>
+              <Label htmlFor="ingredients">Ingredientes *</Label>
               <Textarea
                 id="ingredients"
                 value={formData.ingredients}
@@ -227,7 +227,7 @@ export default function InstagramImportPage() {
 
             {/* Steps */}
             <div className="space-y-2">
-              <Label>Steps *</Label>
+              <Label>Pasos *</Label>
               {formData.steps.map((step, index) => (
                 <div key={index} className="flex gap-2">
                   <span className="text-gray-500 pt-2">{index + 1}.</span>
@@ -248,7 +248,7 @@ export default function InstagramImportPage() {
                 </div>
               ))}
               <Button type="button" variant="outline" size="sm" onClick={addStep}>
-                + Add Step
+                + Añadir Paso
               </Button>
             </div>
 
@@ -257,7 +257,7 @@ export default function InstagramImportPage() {
               <CardContent className="pt-4 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="servings">Servings</Label>
+                    <Label htmlFor="servings">Porciones</Label>
                     <Input
                       id="servings"
                       type="number"
@@ -266,7 +266,7 @@ export default function InstagramImportPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="cookingTime">Cooking Time</Label>
+                    <Label htmlFor="cookingTime">Tiempo de cocción</Label>
                     <Input
                       id="cookingTime"
                       value={formData.cookingTime}
@@ -277,7 +277,7 @@ export default function InstagramImportPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="cuisine">Cuisine</Label>
+                    <Label htmlFor="cuisine">Cocina</Label>
                     <Input
                       id="cuisine"
                       value={formData.cuisine}
@@ -285,28 +285,28 @@ export default function InstagramImportPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="difficulty">Difficulty</Label>
+                    <Label htmlFor="difficulty">Dificultad</Label>
                     <select
                       id="difficulty"
                       value={formData.difficulty}
                       onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as typeof formData.difficulty })}
                       className="w-full h-10 px-3 rounded-md border border-input bg-background"
                     >
-                      <option value="">Select...</option>
-                      <option value="easy">Easy</option>
-                      <option value="medium">Medium</option>
-                      <option value="hard">Hard</option>
+                      <option value="">Seleccionar...</option>
+                      <option value="easy">Fácil</option>
+                      <option value="medium">Media</option>
+                      <option value="hard">Difícil</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="dietaryTags">Dietary Tags</Label>
+                  <Label htmlFor="dietaryTags">Etiquetas dietéticas</Label>
                   <Input
                     id="dietaryTags"
                     value={formData.dietaryTags}
                     onChange={(e) => setFormData({ ...formData, dietaryTags: e.target.value })}
-                    placeholder="vegetarian, gluten-free"
+                    placeholder="vegetariano, sin gluten"
                   />
                 </div>
               </CardContent>
@@ -319,10 +319,10 @@ export default function InstagramImportPage() {
                 className="flex-1"
                 onClick={() => setExtractedRecipe(null)}
               >
-                Start Over
+                Empezar de nuevo
               </Button>
               <Button type="submit" className="flex-1" disabled={isSubmitting}>
-                {isSubmitting ? 'Saving...' : 'Save Recipe'}
+                {isSubmitting ? 'Guardando...' : 'Guardar Receta'}
               </Button>
             </div>
           </form>
