@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import instagramGetUrl from 'instagram-url-direct';
+import { instagramGetUrl } from 'instagram-url-direct';
 
 export async function POST(request: NextRequest) {
   try {

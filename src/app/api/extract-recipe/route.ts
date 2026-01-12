@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
             {
               type: 'file',
               data: videoBase64,
-              mimeType: mimeType,
+              mediaType: mimeType,
             },
           ],
         },
