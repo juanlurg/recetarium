@@ -72,9 +72,9 @@ export default function RecipesPage() {
 
         {/* Recipe list */}
         {isLoading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 bg-muted animate-pulse rounded-xl" />
+          <div className="space-y-2">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="h-[60px] bg-muted animate-pulse rounded-xl" />
             ))}
           </div>
         ) : filteredRecipes.length === 0 ? (
@@ -86,7 +86,7 @@ export default function RecipesPage() {
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {filteredRecipes.map((recipe) => (
               <RecipeCard key={recipe.id} recipe={recipe} />
             ))}
