@@ -12,5 +12,13 @@ service cloud.firestore {
     match /shoppingList/{document} {
       allow read, write: if true;
     }
+
+    match /mealPlans/{document} {
+      allow read, write: if true;
+    }
+
+    match /despensa/{document} {
+      allow read, write: if true;
+    }
   }
 }

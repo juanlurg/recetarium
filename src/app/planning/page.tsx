@@ -30,7 +30,7 @@ import { getAllRecipes } from '@/lib/recipes';
 import { getDespensa } from '@/lib/despensa';
 import { MealPlan, WeekDay } from '@/types/meal-plan';
 import { Recipe } from '@/types/recipe';
-import { ShoppingCart, Search, Check, Loader2, Sparkles, X, AlertCircle } from 'lucide-react';
+import { ShoppingCart, Search, Check, Loader2, Sparkles, X, AlertCircle, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Type for a single suggested day from the API
@@ -64,6 +64,23 @@ export default function PlanningPage() {
   const [isSuggestionDialogOpen, setIsSuggestionDialogOpen] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
   const [suggestionError, setSuggestionError] = useState<string | null>(null);
+
+  // Swap dialog state
+  const [isSwapDialogOpen, setIsSwapDialogOpen] = useState(false);
+  const [swapTarget, setSwapTarget] = useState<{
+    dayIndex: number;
+    date: string;
+    mealType: 'lunch' | 'dinner';
+    currentTitle: string;
+  } | null>(null);
+  const [swapMode, setSwapMode] = useState<'pick' | 'generate'>('pick');
+  const [swapSearchTerm, setSwapSearchTerm] = useState('');
+  const [swapPrompt, setSwapPrompt] = useState('');
+  const [isGeneratingSwap, setIsGeneratingSwap] = useState(false);
+  const [generatedSwapRecipe, setGeneratedSwapRecipe] = useState<{
+    title: string;
+    recipeId: string;
+  } | null>(null);
 
   // Load meal plan and recipes on mount
   useEffect(() => {
@@ -290,6 +307,98 @@ export default function PlanningPage() {
     setSuggestionError(null);
   };
 
+  // Open swap dialog for a specific meal
+  const handleOpenSwapDialog = (
+    dayIndex: number,
+    date: string,
+    mealType: 'lunch' | 'dinner',
+    currentTitle: string
+  ) => {
+    setSwapTarget({ dayIndex, date, mealType, currentTitle });
+    setSwapMode('pick');
+    setSwapSearchTerm('');
+    setSwapPrompt('');
+    setGeneratedSwapRecipe(null);
+    setIsSwapDialogOpen(true);
+  };
+
+  // Handle selecting an existing recipe for swap
+  const handleSwapWithExisting = (recipe: Recipe) => {
+    if (!suggestedPlan || !swapTarget) return;
+
+    const updatedPlan = [...suggestedPlan];
+    updatedPlan[swapTarget.dayIndex] = {
+      ...updatedPlan[swapTarget.dayIndex],
+      [swapTarget.mealType]: {
+        recipeId: recipe.id,
+        recipeTitle: recipe.title,
+      },
+    };
+
+    setSuggestedPlan(updatedPlan);
+    setIsSwapDialogOpen(false);
+    setSwapTarget(null);
+  };
+
+  // Generate a new recipe with AI
+  const handleGenerateSwapRecipe = async () => {
+    if (!swapPrompt.trim()) return;
+
+    setIsGeneratingSwap(true);
+
+    try {
+      const despensa = await getDespensa();
+      const despensaItemNames = despensa.items.map((item) => item.name);
+
+      const response = await fetch('/api/suggest-recipe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          despensaItems: despensaItemNames,
+          preferences: swapPrompt,
+          existingRecipes: recipes.slice(0, 5).map((r) => ({
+            title: r.title,
+            cuisine: r.cuisine,
+            difficulty: r.difficulty,
+          })),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al generar receta');
+      }
+
+      const data = await response.json();
+      setGeneratedSwapRecipe({
+        title: data.recipe.title,
+        recipeId: 'new-generated',
+      });
+    } catch (error) {
+      console.error('Failed to generate swap recipe:', error);
+    } finally {
+      setIsGeneratingSwap(false);
+    }
+  };
+
+  // Apply generated recipe to the plan
+  const handleApplyGeneratedSwap = () => {
+    if (!suggestedPlan || !swapTarget || !generatedSwapRecipe) return;
+
+    const updatedPlan = [...suggestedPlan];
+    updatedPlan[swapTarget.dayIndex] = {
+      ...updatedPlan[swapTarget.dayIndex],
+      [swapTarget.mealType]: {
+        recipeId: generatedSwapRecipe.recipeId,
+        recipeTitle: generatedSwapRecipe.title,
+      },
+    };
+
+    setSuggestedPlan(updatedPlan);
+    setIsSwapDialogOpen(false);
+    setSwapTarget(null);
+    setGeneratedSwapRecipe(null);
+  };
+
   // Get recipe by ID for displaying food category in suggestion preview
   const getRecipeFromSuggestion = (recipeId: string): Recipe | undefined => {
     return recipes.find((r) => r.id === recipeId);
@@ -487,55 +596,38 @@ export default function PlanningPage() {
 
           {/* Suggestion preview */}
           {suggestedPlan && !suggestionError && (
-            <div className="flex-1 overflow-y-auto space-y-3 min-h-0 py-2">
-              {suggestedPlan.map((day) => {
-                const lunchRecipe = getRecipeFromSuggestion(day.lunch.recipeId);
-                const dinnerRecipe = getRecipeFromSuggestion(day.dinner.recipeId);
-                const lunchCategory = lunchRecipe
-                  ? detectFoodCategory(lunchRecipe.title, lunchRecipe.cuisine)
-                  : detectFoodCategory(day.lunch.recipeTitle);
-                const dinnerCategory = dinnerRecipe
-                  ? detectFoodCategory(dinnerRecipe.title, dinnerRecipe.cuisine)
-                  : detectFoodCategory(day.dinner.recipeTitle);
+            <div className="flex-1 overflow-y-auto min-h-0 py-2">
+              <div className="divide-y">
+                {suggestedPlan.map((day, index) => (
+                  <div key={day.date} className="py-3 first:pt-0 last:pb-0">
+                    {/* Day header */}
+                    <p className="font-semibold text-sm mb-2">
+                      {formatDateDisplay(day.date)}
+                    </p>
 
-                return (
-                  <Card key={day.date} className="overflow-hidden">
-                    <CardContent className="p-3">
-                      {/* Day header */}
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="font-semibold text-sm">
-                          {formatDateDisplay(day.date)}
-                        </span>
+                    {/* Meals - stacked vertically */}
+                    <div className="space-y-1.5 text-sm">
+                      <div className="flex gap-2">
+                        <span className="text-muted-foreground w-14 shrink-0">Comida</span>
+                        <span>{day.lunch.recipeTitle}</span>
                       </div>
-
-                      {/* Meals */}
-                      <div className="grid grid-cols-2 gap-2">
-                        {/* Lunch */}
-                        <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
-                          <FoodPlaceholder category={lunchCategory} size="sm" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs text-muted-foreground">Comida</p>
-                            <p className="text-sm font-medium truncate">
-                              {day.lunch.recipeTitle}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Dinner */}
-                        <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
-                          <FoodPlaceholder category={dinnerCategory} size="sm" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs text-muted-foreground">Cena</p>
-                            <p className="text-sm font-medium truncate">
-                              {day.dinner.recipeTitle}
-                            </p>
-                          </div>
-                        </div>
+                      <div className="flex gap-2 items-center">
+                        <span className="text-muted-foreground w-14 shrink-0">Cena</span>
+                        <span className="flex-1">{day.dinner.recipeTitle}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                          onClick={() => handleOpenSwapDialog(index, day.date, 'dinner', day.dinner.recipeTitle)}
+                        >
+                          <RefreshCw className="h-3 w-3 mr-1" />
+                          Cambiar
+                        </Button>
                       </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -564,6 +656,131 @@ export default function PlanningPage() {
               </Button>
             )}
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Swap meal dialog */}
+      <Dialog open={isSwapDialogOpen} onOpenChange={setIsSwapDialogOpen}>
+        <DialogContent className="max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Cambiar cena</DialogTitle>
+            {swapTarget && (
+              <DialogDescription>
+                {swapTarget.currentTitle}
+              </DialogDescription>
+            )}
+          </DialogHeader>
+
+          {/* Mode toggle */}
+          <div className="flex gap-2">
+            <Button
+              variant={swapMode === 'pick' ? 'default' : 'outline'}
+              size="sm"
+              className="flex-1"
+              onClick={() => setSwapMode('pick')}
+            >
+              Elegir receta
+            </Button>
+            <Button
+              variant={swapMode === 'generate' ? 'default' : 'outline'}
+              size="sm"
+              className="flex-1"
+              onClick={() => setSwapMode('generate')}
+            >
+              <Sparkles className="h-4 w-4 mr-1" />
+              Generar con IA
+            </Button>
+          </div>
+
+          {/* Pick mode */}
+          {swapMode === 'pick' && (
+            <>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Buscar recetas..."
+                  value={swapSearchTerm}
+                  onChange={(e) => setSwapSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+
+              <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
+                {recipes
+                  .filter((r) => r.title.toLowerCase().includes(swapSearchTerm.toLowerCase()))
+                  .map((recipe) => {
+                    const category = detectFoodCategory(recipe.title, recipe.cuisine);
+                    return (
+                      <button
+                        key={recipe.id}
+                        onClick={() => handleSwapWithExisting(recipe)}
+                        className={cn(
+                          'w-full flex items-center gap-3 p-3 rounded-lg border',
+                          'hover:bg-muted/50 hover:border-primary transition-colors text-left'
+                        )}
+                      >
+                        <FoodPlaceholder category={category} size="sm" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{recipe.title}</p>
+                          {recipe.cookingTime && (
+                            <p className="text-xs text-muted-foreground">
+                              {recipe.cookingTime}
+                            </p>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+              </div>
+            </>
+          )}
+
+          {/* Generate mode */}
+          {swapMode === 'generate' && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Input
+                  placeholder="Ej: algo con pollo, vegetariano, rapido..."
+                  value={swapPrompt}
+                  onChange={(e) => setSwapPrompt(e.target.value)}
+                  disabled={isGeneratingSwap}
+                />
+                <Button
+                  className="w-full"
+                  onClick={handleGenerateSwapRecipe}
+                  disabled={isGeneratingSwap || !swapPrompt.trim()}
+                >
+                  {isGeneratingSwap ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Generando...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Generar sugerencia
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* Generated recipe preview */}
+              {generatedSwapRecipe && (
+                <div className="p-4 rounded-lg border bg-muted/30">
+                  <p className="font-medium">{generatedSwapRecipe.title}</p>
+                  <Button
+                    className="w-full mt-3"
+                    size="sm"
+                    onClick={handleApplyGeneratedSwap}
+                  >
+                    <Check className="h-4 w-4 mr-2" />
+                    Usar esta receta
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </AppShell>
